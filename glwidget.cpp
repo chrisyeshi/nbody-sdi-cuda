@@ -1,8 +1,9 @@
 #include "glwidget.h"
+#include <cassert>
 #include <QKeyEvent>
 
 GLWidget::GLWidget(QWidget* parent)
-  : QGLWidget(parent), nbody(N)
+  : QGLWidget(parent), nbody(N), vbo(QOpenGLBuffer::VertexBuffer)
 {
 	connect(&timer, SIGNAL(timeout()), this, SLOT(advance()));
 }
@@ -29,11 +30,18 @@ void GLWidget::advance()
 
 void GLWidget::initializeGL()
 {
+	// standard gl initialization
 	qglClearColor(QColor(0, 0, 0));
 	glEnable(GL_POINT_SMOOTH);
-	// glPointSize(15);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	// vertex buffer object for the points
+	vbo.create();
+	vbo.setUsagePattern(QOpenGLBuffer::DynamicDraw);
+	vbo.bind();
+	vbo.allocate(N * sizeof(float3));
+	vbo.release();
+	// timer
 	timer.start(0);
 	elapsed.start();
 }
@@ -46,16 +54,26 @@ void GLWidget::paintGL()
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	std::vector<float3> bodies = nbody.getBodies();
-
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	qglColor(QColor(255, 255, 255, 225));
-	glBegin(GL_POINTS);
-	for (unsigned int i = 0; i < bodies.size(); ++i)
-	{
-		glVertex2f(bodies[i].x, bodies[i].y);
-	}
-	glEnd();
+
+	std::vector<float3> bodies = nbody.getBodies();
+	assert(bodies.size() == N);
+
+	vbo.bind();
+	vbo.write(0, &bodies[0], N * sizeof(float3));
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glVertexPointer(2, GL_FLOAT, sizeof(float3), 0);
+	glDrawArrays(GL_POINTS, 0, N);
+	glDisableClientState(GL_VERTEX_ARRAY);
+	vbo.release();
+
+	// glBegin(GL_POINTS);
+	// for (unsigned int i = 0; i < bodies.size(); ++i)
+	// {
+	// 	glVertex2f(bodies[i].x, bodies[i].y);
+	// }
+	// glEnd();
 }
 
 void GLWidget::resizeGL(int width, int height)

@@ -4,6 +4,7 @@
 #include <QGLWidget>
 #include <QTimer>
 #include <QElapsedTimer>
+#include <QOpenGLBuffer>
 #include "cuda/nbody.h"
 
 class GLWidget : public QGLWidget
@@ -26,6 +27,7 @@ private:
 	NBody nbody;
 	QTimer timer;
 	QElapsedTimer elapsed;
+	QOpenGLBuffer vbo;
 };
 
 #endif // __GLWIDGET_H__

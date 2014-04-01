@@ -10,6 +10,7 @@
 #define MASS_RANGE make_float2(1.f, 32.f)
 #define CENTER make_float3(0.5f, 0.5f, 300.f)
 #define ROTATE make_float2(0.25f, 0.25f)
+// #define ROTATE make_float2(0.f, 0.f)
 
 __device__ float2 force_of_a_from_b(float3 aBody, float3 bBody)
 {
