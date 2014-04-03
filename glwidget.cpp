@@ -2,8 +2,8 @@
 #include <cassert>
 #include <QKeyEvent>
 
-GLWidget::GLWidget(QWidget* parent)
-  : QGLWidget(parent), nbody(N), vbo(QOpenGLBuffer::VertexBuffer)
+GLWidget::GLWidget(int N, QWidget* parent)
+  : QGLWidget(parent), N(N), nbody(N), vbo(QOpenGLBuffer::VertexBuffer)
 {
 	connect(&timer, SIGNAL(timeout()), this, SLOT(advance()));
 }
@@ -41,6 +41,8 @@ void GLWidget::initializeGL()
 	vbo.bind();
 	vbo.allocate(N * sizeof(float3));
 	vbo.release();
+	// register vbo
+	nbody.initBodies(vbo.bufferId());
 	// timer
 	timer.start(0);
 	elapsed.start();
@@ -57,11 +59,11 @@ void GLWidget::paintGL()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	qglColor(QColor(255, 255, 255, 225));
 
-	std::vector<float3> bodies = nbody.getBodies();
-	assert(bodies.size() == N);
+	// std::vector<float3> bodies = nbody.getBodies();
+	// assert(bodies.size() == N);
 
 	vbo.bind();
-	vbo.write(0, &bodies[0], N * sizeof(float3));
+	// vbo.write(0, &bodies[0], N * sizeof(float3));
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glVertexPointer(2, GL_FLOAT, sizeof(float3), 0);
 	glDrawArrays(GL_POINTS, 0, N);

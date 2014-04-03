@@ -11,7 +11,7 @@ class GLWidget : public QGLWidget
 {
 	Q_OBJECT
 public:
-	explicit GLWidget(QWidget* parent = 0);
+	explicit GLWidget(int N, QWidget* parent = 0);
 
 public slots:
 	void advance();
@@ -23,7 +23,7 @@ protected:
     virtual void keyPressEvent(QKeyEvent* event);
 
 private:
-	static const int N = 512;
+	int N;
 	NBody nbody;
 	QTimer timer;
 	QElapsedTimer elapsed;
