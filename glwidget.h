@@ -27,7 +27,7 @@ private:
 	NBody nbody;
 	QTimer timer;
 	QElapsedTimer elapsed;
-	QOpenGLBuffer vbo;
+	QOpenGLBuffer vbo, ibo;
 };
 
 #endif // __GLWIDGET_H__

@@ -2,13 +2,14 @@
 #include <iostream>
 #include <cmath>
 #include <cstdlib>
+#include "delaunay.h"
 
-#define EPS2 0.05f
+#define EPS2 0.00001f
 #define G 0.0000000667384f
 #define BLOCKSIZE 256
-#define MASS_RANGE make_float2(1.f, 32.f)
-#define CENTER make_float3(0.5f, 0.5f, 1000000.f)
-#define ROTATE make_float2(0.25f, 0.25f)
+#define MASS_RANGE make_float2(1.f, 10.f)
+#define CENTER make_float3(0.5f, 0.5f, 100.f)
+#define ROTATE make_float2(0.025f, 0.025f)
 // #define ROTATE make_float2(0.f, 0.f)
 
 __device__ float2 force_of_a_from_b(float3 aBody, float3 bBody)
@@ -118,6 +119,7 @@ __global__ void kernelAdvance(int N, float deltaTime, float2* velocities, float3
 NBody::NBody(int N)
   : N(N), dForces(N)
 {
+	delaunay.setBoardSize(1024);
 }
 
 void NBody::initBodies(GLuint vbo)
@@ -155,8 +157,21 @@ void NBody::advance(float deltaTime = 1.f)
 	dim3 grid(int(ceil(float(N)/BLOCKSIZE)));
 	dim3 block(BLOCKSIZE);
 	dBodies.map();
+
+	// nbody
 	kernelComputeForces<<<grid, block, BLOCKSIZE * sizeof(float3)>>>(N, dBodies, dForces);
 	kernelUpdateVelocities<<<grid, block>>>(N, deltaTime, dBodies, dForces, dVelocities);
 	kernelAdvance<<<grid, block>>>(N, deltaTime, dVelocities, dBodies);
+	// delaunay
+	thrust::device_ptr<float3> dev_ptr(dBodies.ptr());
+	thrust::device_vector<float3> sites3d(dev_ptr, dev_ptr + dBodies.length());
+	thrust::host_vector<float2> hSites(sites3d.size());
+	for (unsigned int i = 0; i < hSites.size(); ++i)
+	{
+		float3 site = sites3d[i];
+		hSites[i] = make_float2(site.x, site.y);
+	}
+	delaunay.build(hSites);
+
 	dBodies.unmap();
 }

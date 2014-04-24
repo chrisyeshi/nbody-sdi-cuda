@@ -3,7 +3,8 @@
 #include <QKeyEvent>
 
 GLWidget::GLWidget(int N, QWidget* parent)
-  : QGLWidget(parent), N(N), nbody(N), vbo(QOpenGLBuffer::VertexBuffer)
+  : QGLWidget(parent), N(N), nbody(N),
+    vbo(QOpenGLBuffer::VertexBuffer), ibo(QOpenGLBuffer::IndexBuffer)
 {
 	connect(&timer, SIGNAL(timeout()), this, SLOT(advance()));
 }
@@ -18,7 +19,9 @@ void GLWidget::advance()
 {
 	int msec = elapsed.elapsed();
 	elapsed.restart();
+	// std::cout << float(msec) / 1000.f << std::endl;
 	nbody.advance(float(msec) / 1000.f);
+	// nbody.advance(0.015);
 	updateGL();
 }
 
@@ -31,7 +34,7 @@ void GLWidget::advance()
 void GLWidget::initializeGL()
 {
 	// standard gl initialization
-	qglClearColor(QColor(0, 0, 0));
+	qglClearColor(QColor(25, 25, 25));
 	glEnable(GL_POINT_SMOOTH);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -43,6 +46,9 @@ void GLWidget::initializeGL()
 	vbo.release();
 	// register vbo
 	nbody.initBodies(vbo.bufferId());
+	// ibo for triangles
+	ibo.create();
+	ibo.setUsagePattern(QOpenGLBuffer::DynamicDraw);
 	// timer
 	timer.start(0);
 	elapsed.start();
@@ -63,10 +69,22 @@ void GLWidget::paintGL()
 	// assert(bodies.size() == N);
 
 	vbo.bind();
-	// vbo.write(0, &bodies[0], N * sizeof(float3));
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glVertexPointer(2, GL_FLOAT, sizeof(float3), 0);
-	glDrawArrays(GL_POINTS, 0, N);
+
+	// ibo
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	std::vector<ushort3> trias = nbody.getTrias();
+	ibo.bind();
+	ibo.allocate(trias.data(), trias.size() * sizeof(ushort3));
+	qglColor(QColor(240, 204, 127));
+	glDrawElements(GL_TRIANGLES, trias.size() * 3, GL_UNSIGNED_SHORT, 0);
+	ibo.release();
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	// qglColor(QColor(200, 70, 40));
+	// glDrawArrays(GL_POINTS, 0, N);
+
 	glDisableClientState(GL_VERTEX_ARRAY);
 	vbo.release();
 

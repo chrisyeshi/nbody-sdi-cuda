@@ -5,6 +5,7 @@
 #include <GL/gl.h>
 #include "cudabuffer.h"
 #include "cudaglbuffer.h"
+#include "delaunay.h"
 
 class NBody
 {
@@ -14,6 +15,7 @@ public:
 	void initBodies(GLuint vbo);
 	void advance(float deltaTime);
 	std::vector<float3> getBodies() { return dBodies.toHost(); }
+	std::vector<ushort3> getTrias() const { return delaunay.getTrias(); }
 
 protected:
 
@@ -22,6 +24,7 @@ private:
 	yy::CudaGLBuffer<float3> dBodies;
 	yy::CudaBuffer<float2> dVelocities;
 	yy::CudaBuffer<float2> dForces;
+	Delaunay delaunay;
 };
 
 #endif // __NBODY_H__
