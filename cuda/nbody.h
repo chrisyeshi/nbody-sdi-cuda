@@ -14,7 +14,7 @@ public:
 
 	void initBodies(GLuint vbo);
 	void advance(float deltaTime);
-	std::vector<float3> getBodies() { return dBodies.toHost(); }
+	// std::vector<float3> getBodies() { return dBodies.toHost(); }
 	std::vector<ushort3> getTrias() const { return delaunay.getTrias(); }
 
 protected:
